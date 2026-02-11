@@ -1,27 +1,22 @@
 import logging
-import os
+import requests
 
 # Set up debug logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG)
 
-# Check for essential environment variables
-required_env_vars = ['TELEGRAM_TOKEN', 'CHAT_ID']
-for var in required_env_vars:
-    if var not in os.environ:
-        logging.error(f'Missing required environment variable: {var}')
-        raise EnvironmentError(f'Missing required environment variable: {var}')
-    else:
-        logging.debug(f'Environment variable {var} is set.')
+TELEGRAM_API_URL = 'https://api.telegram.org/bot<token>/sendMessage'
 
-# Example function to send Telegram notifications with debug logging
-
-def send_telegram_notification(message):
-    logging.debug('Preparing to send notification...')
-    token = os.environ['TELEGRAM_TOKEN']
-    chat_id = os.environ['CHAT_ID']
+def send_telegram_message(chat_id, message):
     try:
-        response = requests.post(f'https://api.telegram.org/bot{token}/sendMessage', data={'chat_id': chat_id, 'text': message})
-        response.raise_for_status()
-        logging.info('Notification sent successfully!')
+        payload = {'chat_id': chat_id, 'text': message}
+        logging.debug(f"Sending message to {chat_id}: {message}")
+        response = requests.post(TELEGRAM_API_URL, json=payload)
+        response.raise_for_status()  # Raise an error for bad responses
+        logging.debug(f"Message sent successfully: {response.json()}")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Failed to send message to Telegram: {e}")
+        logging.debug(f"Response: {response.content}")
     except Exception as e:
-        logging.error(f'Failed to send notification: {e}')
+        logging.error(f"An unexpected error occurred: {e}")
+
+# Example usage: send_telegram_message('<chat_id>', 'This is a test message.')
